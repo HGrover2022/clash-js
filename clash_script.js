@@ -19,6 +19,9 @@ const autoSelectInterval = 300;  // 默认 300 秒（5 分钟），可自定义
 const autoSelectTimeout = 2000;  // 默认 2000 毫秒（2 秒），可自定义
 // 如果当前节点比最快节点慢的差距在 35ms 以内，则不进行切换，防止频繁跳动
 const autoSelectTolerance = 35;
+// 是否在 Clash 界面中隐藏地区自动选择分组（🇯🇵 日本自动、🇹🇼 台湾自动、🇺🇸 美国自动）
+const autoSelectHidden = true;  // true = 隐藏，false = 显示
+// const autoSelectHidden = false;  // 取消注释这行来显示自动选择分组
 // 自动选择节点的测速 URL
 const autoSelectUrl = "https://www.google.com/generate_204";  // 可自定义测速地址
 // 构建最终的过滤正则（排除官网/套餐等 + 用户自定义排除）
@@ -386,8 +389,8 @@ const autoSelectOption = {
   tolerance: autoSelectTolerance,  // 添加容差参数
   url: autoSelectUrl,
   lazy: true,
-  "max-failed-times": 2,
-  hidden: true
+  "max-failed-times": 1,  // 改为 1 次，一旦失败立即切换
+  hidden: autoSelectHidden  // 使用用户配置的 hidden 选项
 };
 
 // 创建地区自动选择分组的辅助函数
@@ -459,7 +462,7 @@ function main(config) {
     {
       ...groupBaseOption,
       name: "节点选择",
-      type: "select",
+      type: "select", 
       proxies: [...autoSelectProxies, "socks5"],
       "include-all": true,
       filter: dynamicFilter,

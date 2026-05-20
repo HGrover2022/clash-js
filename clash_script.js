@@ -23,6 +23,9 @@ const autoSelectTolerance = 35;
 const autoSelectHidden = true;  // true = 隐藏，false = 显示   隐藏/显示自动选择分组
 // 自动选择节点的测速 URL
 const autoSelectUrl = "https://www.google.com/generate_204";  // 可自定义测速地址
+// 低倍率节点匹配关键词，可按你的机场命名习惯自行增删
+const lowRatioKeywords = "[⁰¹²³⁴⁵⁶⁷⁸⁹˙.]+ˣ";
+const japanKeywords = "日本|Japan|JP|JAPAN|🇯🇵";
 // 构建最终的过滤正则（排除官网/套餐等 + 用户自定义排除）
 function buildFilterRegex() {
   const baseExclude = "官网|套餐|流量|异常|剩余";  // 基础排除项
@@ -242,6 +245,20 @@ const ruleProviders = {
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Spotify/Spotify.yaml",
     path: "./ruleset/blackmatrix7/Spotify.yaml"
   },
+  // Steam 中国大陆 CDN/下载域名：优先直连
+  SteamCN: {
+    ...ruleProviderCommon,
+    behavior: "classical",
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/SteamCN/SteamCN.yaml",
+    path: "./ruleset/blackmatrix7/SteamCN.yaml"
+  },
+  // Steam 国际站、社区、商店等：交给独立 Steam 分组
+  Steam: {
+    ...ruleProviderCommon,
+    behavior: "classical",
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Steam/Steam.yaml",
+    path: "./ruleset/blackmatrix7/Steam.yaml"
+  },
 // Bilibili 港澳台限定内容规则（只包含需要代理的域名）
   BilibiliHMT: {
     ...ruleProviderCommon,
@@ -271,9 +288,10 @@ const ruleProviders = {
 
 const customDomainSuffix = {
   "谷歌服务": [
-    // "scholar.google.com",
-    // "accounts.google.com",
     "antigravity-unleash.goog",
+    "tenor.com",
+    "media.tenor.com",
+    "tenor.googleapis.com",
   ],
   "流媒体": [
     // "m.youtube.com",
@@ -305,7 +323,7 @@ const customDomainSuffix = {
     // "open.spotify.com",
   ],
   "节点选择": [
-    // 想强制走主节点选择组的自定义域名
+
   ],
   "全局直连": [
     // 想强制直连的额外域名
@@ -333,10 +351,16 @@ function buildCustomRules() {
 // ===================== 基础规则列表 =====================
 
 const baseRules = [
-  // 自定义规则（仍然保留）
-  "DOMAIN-SUFFIX,googleapis.cn,节点选择",
-  "DOMAIN-SUFFIX,gstatic.com,节点选择",
-  "DOMAIN-SUFFIX,xn--ngstr-lra8j.com,节点选择",
+  // 自定义规则（Google 相关规则尽量细分，避免过早落到“节点选择”）
+  "DOMAIN-SUFFIX,googleapis.cn,全局直连",
+  "DOMAIN-SUFFIX,gstatic.com,谷歌服务",
+  "DOMAIN-SUFFIX,googlevideo.com,谷歌服务",
+  "DOMAIN-SUFFIX,ytimg.com,谷歌服务",
+  "DOMAIN-SUFFIX,ggpht.com,谷歌服务",
+  "DOMAIN-SUFFIX,gvt1.com,谷歌服务",
+  "DOMAIN-SUFFIX,gvt2.com,谷歌服务",
+  "DOMAIN-SUFFIX,gvt3.com,谷歌服务",
+  "DOMAIN-SUFFIX,xn--ngstr-lra8j.com,谷歌服务",
   "DOMAIN-SUFFIX,github.io,节点选择",
   "DOMAIN,v2rayse.com,节点选择",
 
@@ -352,6 +376,8 @@ const baseRules = [
   "RULE-SET,TikTok,流媒体",
   "RULE-SET,bahamut,动画疯",
   "RULE-SET,Spotify,Spotify",
+  "RULE-SET,SteamCN,全局直连",
+  "RULE-SET,Steam,Steam",
   "RULE-SET,BilibiliHMT,哔哩哔哩港澳台", 
   "RULE-SET,AI,AI",
   "RULE-SET,Twitter,社交媒体",
@@ -398,8 +424,7 @@ function createRegionAutoGroups(config, dynamicFilter) {
     return [];  // 如果禁用自动选择，返回空数组
   }
 
-  // 从 dynamicFilter 中提取排除规则
-  const excludePattern = dynamicFilter.match(/\(\.\*\(([^)]+)\)\)/)?.[1] || "官网|套餐|流量|异常|剩余";
+
 
   return [
     {
@@ -407,7 +432,15 @@ function createRegionAutoGroups(config, dynamicFilter) {
       name: "🇯🇵 日本自动",
       type: "url-test",
       "include-all": true,
-      filter: "日本|霓虹|jp|JP|Japan|JAPAN|🇯🇵",
+      filter: japanKeywords,
+      icon: "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/adjust.svg",
+    },
+    {
+      ...autoSelectOption,
+      name: "🎃 低倍率自动",
+      type: "url-test",
+      "include-all": true,
+      filter: lowRatioKeywords,
       icon: "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/adjust.svg",
     },
     {
@@ -453,7 +486,7 @@ function main(config) {
   
   // 构建自动选择节点列表（如果启用）
   const autoSelectProxies = enableAutoSelect 
-    ? ["🇯🇵 日本自动", "🇹🇼 台湾自动", "🇺🇸 美国自动"]
+    ? ["🇯🇵 日本自动", "🇹🇼 台湾自动", "🇺🇸 美国自动", "🎃 低倍率自动"]
     : [];
 
   // 先定义各策略组（这里直接把 socks5 写进各分组）
@@ -462,7 +495,7 @@ function main(config) {
       ...groupBaseOption,
       name: "节点选择",
       type: "select", 
-      proxies: [...autoSelectProxies, "socks5"],
+      proxies: ["🇹🇼 台湾自动", "🇯🇵 日本自动", "🇺🇸 美国自动", "🎃 低倍率自动", "socks5"],
       "include-all": true,
       filter: dynamicFilter,
       icon: "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/adjust.svg"
@@ -480,7 +513,7 @@ function main(config) {
       ...groupBaseOption,
       name: "流媒体",
       type: "select",
-      proxies: ["节点选择", ...autoSelectProxies, "socks5", "全局直连"],
+      proxies: ["🎃 低倍率自动", "节点选择", "🇯🇵 日本自动", "🇹🇼 台湾自动", "🇺🇸 美国自动", "socks5", "全局直连"],
       "include-all": true,
       filter: dynamicFilter,
       icon: "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/youtube.svg"
@@ -489,7 +522,7 @@ function main(config) {
       ...groupBaseOption,
       name: "社交媒体",
       type: "select",
-      proxies: ["节点选择", ...autoSelectProxies, "socks5", "全局直连"],
+      proxies: ["🇯🇵 日本自动", "节点选择", "🇹🇼 台湾自动", "🇺🇸 美国自动", "🎃 低倍率自动", "socks5", "全局直连"],
       "include-all": true,
       filter: dynamicFilter,
       icon: "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/telegram.svg"
@@ -525,7 +558,7 @@ function main(config) {
       ...groupBaseOption,
       name: "动画疯",
       type: "select",
-      proxies: ["节点选择", ...autoSelectProxies, "socks5"],
+      proxies: ["🎃 低倍率自动", "节点选择", "🇹🇼 台湾自动", "🇯🇵 日本自动", "🇺🇸 美国自动", "socks5"],
       "include-all": true,
       filter: "台|tw|TW|日月潭",  // 动画疯只保留台湾节点
       icon: "https://fastly.jsdelivr.net/gh/xiaolin-007/clash@main/icon/Bahamut.svg"
@@ -534,7 +567,7 @@ function main(config) {
       ...groupBaseOption,
       name: "哔哩哔哩港澳台",
       type: "select",
-      proxies: ["全局直连", "节点选择", ...autoSelectProxies, "socks5"],
+      proxies: ["🎃 低倍率自动", "全局直连", "节点选择", "🇯🇵 日本自动", "🇹🇼 台湾自动", "🇺🇸 美国自动", "socks5"],
       "include-all": true,
       filter: dynamicFilter,
       icon: "https://fastly.jsdelivr.net/gh/xiaolin-007/clash@main/icon/bilibili.svg"
@@ -543,10 +576,19 @@ function main(config) {
       ...groupBaseOption,
       name: "Spotify",
       type: "select",
-      proxies: ["节点选择", ...autoSelectProxies, "socks5", "全局直连"],
+      proxies: ["🇯🇵 日本自动", "节点选择", "🇹🇼 台湾自动", "🇺🇸 美国自动", "🎃 低倍率自动", "socks5", "全局直连"],
       "include-all": true,
       filter: dynamicFilter,
       icon: "https://fastly.jsdelivr.net/gh/xiaolin-007/clash@main/icon/spotify.svg"
+    },
+    {
+      ...groupBaseOption,
+      name: "Steam",
+      type: "select",
+      proxies: ["🎃 低倍率自动", "全局直连", "节点选择", "🇯🇵 日本自动", "🇹🇼 台湾自动", "🇺🇸 美国自动", "socks5"],
+      "include-all": true,
+      filter: dynamicFilter,
+      icon: "https://fastly.jsdelivr.net/gh/Koolson/Qure/IconSet/Color/Steam.png"
     },
     {
       ...groupBaseOption,

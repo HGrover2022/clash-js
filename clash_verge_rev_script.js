@@ -352,6 +352,7 @@ function buildCustomRules() {
 
 const baseRules = [
   // 自定义规则（Google 相关规则尽量细分，避免过早落到“节点选择”）
+  "IP-CIDR,152.69.184.104/32,全局直连,no-resolve",
   "DOMAIN-SUFFIX,googleapis.cn,全局直连",
   "DOMAIN-SUFFIX,gstatic.com,谷歌服务",
   "DOMAIN-SUFFIX,googlevideo.com,谷歌服务",

@@ -316,6 +316,7 @@ function buildCustomRules() {
 
 // ===================== 基础规则列表 =====================
 const baseRules = [
+  "IP-CIDR,152.69.184.104/32,全局直连,no-resolve",
   "DOMAIN-SUFFIX,googleapis.cn,全局直连",
   "DOMAIN-SUFFIX,gstatic.com,谷歌服务",
   "DOMAIN-SUFFIX,googlevideo.com,谷歌服务",

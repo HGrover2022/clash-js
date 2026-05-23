@@ -331,6 +331,7 @@ const customDomainSuffix = {
   ],
   "全局直连": [
     // 想强制直连的额外域名
+    "invite.linuxdo.org",
   ],
   "漏网之鱼": [
     // 特殊场景：不想被前面规则命中，可以钉在漏网之鱼再手动选分组
@@ -597,7 +598,7 @@ function main(config) {
       ...groupBaseOption,
       name: "Steam",
       type: "select",
-      proxies: ["🎃 低倍率自动", "全局直连", "节点选择", "🇯🇵 日本自动", "🇹🇼 台湾自动", "🇺🇸 美国自动", "socks5"],
+      proxies: ["🇯🇵 日本自动", "全局直连", "节点选择", "🎃 低倍率自动", "🇹🇼 台湾自动", "🇺🇸 美国自动", "socks5"],
       "include-all": true,
       "exclude-filter": dynamicExcludeFilter,
       icon: "https://fastly.jsdelivr.net/gh/Koolson/Qure/IconSet/Color/Steam.png"

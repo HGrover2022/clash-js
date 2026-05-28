@@ -42,6 +42,53 @@ function buildExcludeFilterRegex() {
   return baseExclude;
 }
 
+// ===================== 自定义节点 =====================
+// 在这里添加你自己的节点
+const customProxies = [
+  // 在下方添加你的自定义节点，可以参考下方的格式
+  // --- VLESS 节点示例 ---
+  {
+    name: "自定义VLESS", // 节点名称
+    type: "vless",
+    server: "your_server_address", // 服务器地址
+    port: 443, // 端口
+    uuid: "your_uuid", // UUID
+    cipher: "auto",
+    tls: true,
+    udp: true,
+    sni: "your_sni", // SNI
+    network: "ws", // 网络类型，如 ws, grpc
+    "ws-opts": {
+      path: "/your_path", // WebSocket 路径
+      headers: { Host: "your_host" } // WebSocket Host
+    }
+  },
+  // --- TUIC 节点示例 ---
+  {
+    name: "自定义TUIC",
+    type: "tuic",
+    server: "your_server_address",
+    port: 443,
+    uuid: "your_uuid",
+    password: "your_password",
+    alpn: ["h3"],
+    sni: "your_sni",
+    "congestion-control": "bbr",
+    "udp-relay-mode": "native",
+    "skip-cert-verify": true
+  },
+  // --- Hysteria2 节点示例 ---
+  {
+    name: "自定义Hysteria2",
+    type: "hysteria2",
+    server: "your_server_address",
+    port: 443,
+    password: "your_password",
+    sni: "your_sni",
+    "skip-cert-verify": true
+  }
+];
+
 // ===================== DNS 防泄露 =====================
 
 // 国内DNS服务器
@@ -470,6 +517,15 @@ function createRegionAutoGroups(config, dynamicExcludeFilter) {
       filter: "(?i)美国|us|america|🇺🇸",
       "exclude-filter": dynamicExcludeFilter,
       icon: "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/flags/us.svg",
+    },
+    {
+      ...autoSelectOption,
+      name: "🇸🇬 狮城自动",
+      type: "url-test",
+      "include-all": true,
+      filter: "(?i)新加坡|狮城|sg|singapore|🇸🇬",
+      "exclude-filter": dynamicExcludeFilter,
+      icon: "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/flags/sg.svg",
     }
   ];
 }
@@ -477,6 +533,10 @@ function createRegionAutoGroups(config, dynamicExcludeFilter) {
 // ===================== 主入口 =====================
 
 function main(config) {
+  // 添加自定义节点
+  if (config.proxies && Array.isArray(config.proxies)) {
+    config.proxies.unshift(...customProxies);
+  }
   const proxyCount = config?.proxies?.length ?? 0;
   const proxyProviderCount =
     typeof config?.["proxy-providers"] === "object"
@@ -498,7 +558,7 @@ function main(config) {
   
   // 构建自动选择节点列表（如果启用）
   const autoSelectProxies = enableAutoSelect 
-    ? ["🇯🇵 日本自动", "🇹🇼 台湾自动", "🇺🇸 美国自动", "🎃 低倍率自动"]
+    ? ["🇹🇼 台湾自动", "🇯🇵 日本自动", "🇺🇸 美国自动", "🇸🇬 狮城自动", "🎃 低倍率自动"]
     : [];
 
   // 先定义各策略组（这里直接把 socks5 写进各分组）
@@ -507,7 +567,7 @@ function main(config) {
       ...groupBaseOption,
       name: "节点选择",
       type: "select", 
-      proxies: ["🇹🇼 台湾自动", "🇯🇵 日本自动", "🇺🇸 美国自动", "🎃 低倍率自动", "socks5"],
+      proxies: ["🇹🇼 台湾自动", "🇯🇵 日本自动", "🇺🇸 美国自动", "🇸🇬 狮城自动", "🎃 低倍率自动", "socks5"],
       "include-all": true,
       "exclude-filter": dynamicExcludeFilter,
       icon: "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/adjust.svg"

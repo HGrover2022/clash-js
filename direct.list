@@ -1,2 +1,7 @@
 # 个人全局直连关键词
 DOMAIN-KEYWORD,hhkan
+PROCESS-NAME,WeChat.exe
+PROCESS-NAME,Weixin.exe
+PROCESS-NAME,WeChatAppEx.exe
+PROCESS-NAME,WeChatPlayer.exe
+PROCESS-NAME,wechatweb.exe

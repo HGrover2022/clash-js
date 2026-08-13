@@ -3,18 +3,47 @@ payload:
   # AUTHOR: HGrover
   # REPO: local
   # UPDATED: 2026-08-08
-  - DOMAIN-SUFFIX,loyisa.cn
-  - DOMAIN-SUFFIX,hypixel.net
-  - DOMAIN-SUFFIX,bedwarspractice.club
-  - DOMAIN-SUFFIX,rockstargames.com
-  - DOMAIN-SUFFIX,rockstargames-services.com
-  - DOMAIN-SUFFIX,forza.net
-  - DOMAIN-SUFFIX,forzamotorsport.net
-  - DOMAIN-SUFFIX,forzamotorsport.com
-  - DOMAIN-SUFFIX,forzahorizon.com
-  - DOMAIN-SUFFIX,xboxlive.com
-  - DOMAIN-SUFFIX,xboxservices.com
-  - DOMAIN-SUFFIX,xbox.com
-  - DOMAIN-SUFFIX,minecraftservices.com
-  - DOMAIN-SUFFIX,mojang.com
-  - DOMAIN-SUFFIX,minecraft.net
+
+  # ================= 🏎️ Forza Horizon 系列 (地平线) =================
+  - PROCESS-NAME,ForzaHorizon4.exe
+  - PROCESS-NAME,ForzaHorizon5.exe
+  - PROCESS-NAME,gamingservices.exe
+  - PROCESS-NAME,XboxApp.exe
+  - PROCESS-NAME,XboxLiveAuth.exe
+
+  # ================= 🔫 Grand Theft Auto 系列 (GTA) =================
+  - PROCESS-NAME,GTA5.exe
+  - PROCESS-NAME,PlayGTAV.exe
+  - PROCESS-NAME,GTAVLauncher.exe
+  - PROCESS-NAME,Launcher.exe
+  - PROCESS-NAME,RockstarService.exe
+  - PROCESS-NAME,SocialclubHelper.exe
+
+  # ================= 💥 Battlefield 系列 (战地) =================
+  - PROCESS-NAME,bf1.exe
+  - PROCESS-NAME,bfv.exe
+  - PROCESS-NAME,bf2042.exe
+  - PROCESS-NAME,EADesktop.exe
+  - PROCESS-NAME,EALocalHostSvc.exe
+  - PROCESS-NAME,EABackgroundService.exe
+  - PROCESS-NAME,EasyAntiCheat.exe
+
+  # ================= 🏃 Apex Legends (Apex 英雄) =================
+  - PROCESS-NAME,r5apex.exe
+  - PROCESS-NAME,EasyAntiCheat_launcher.exe
+
+  # ================= 🥋 Mortal Kombat 系列 (真人快打) =================
+  - PROCESS-NAME,MK11.exe
+  - PROCESS-NAME,MK12.exe
+  - PROCESS-NAME,MortalKombat.exe
+  - PROCESS-NAME,MortalKombat11.exe
+
+  # ================= ⛏️ Minecraft (我的世界) =================
+  # 我的世界 Java 版是由 javaw.exe 运行的
+  - PROCESS-NAME,javaw.exe
+  # 我的世界 基岩版 (Windows 10/11 版)
+  - PROCESS-NAME,Minecraft.Windows.exe
+  # 第三方/官方启动器 (防止正版验证报错)
+  - PROCESS-NAME,MinecraftLauncher.exe
+  - PROCESS-NAME,HMCL.exe
+  - PROCESS-NAME,PCL.exe

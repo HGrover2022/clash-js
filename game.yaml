@@ -5,8 +5,8 @@ payload:
   # UPDATED: 2026-08-08
 
   # ================= 🏎️ Forza Horizon 系列 (地平线) =================
-  - PROCESS-NAME,ForzaHorizon4.exe
-  - PROCESS-NAME,ForzaHorizon5.exe
+  - PROCESS-NAME,forzahorizon4.exe
+  - PROCESS-NAME,forzaHorizon5.exe
   - PROCESS-NAME,gamingservices.exe
   - PROCESS-NAME,XboxApp.exe
   - PROCESS-NAME,XboxLiveAuth.exe

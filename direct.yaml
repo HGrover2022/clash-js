@@ -1,3 +1,4 @@
 payload:
   # 个人全局直连关键词
   - DOMAIN-KEYWORD,hhkan
+  - IP-CIDR,152.69.184.104/32,no-resolve

@@ -173,7 +173,7 @@ function repairVmessJson(jsonStr) {
   return jsonStr.replace(/"([a-zA-Z0-9_]+):"\s*(?=")/g, '"$1": ').replace(/"\s+"([a-zA-Z0-9_]+)"\s*:/g, '", "$1":');
 }
 
-// ==================== 🛠️ 模块五：节点协议解析器 (加强版) ====================
+// ==================== 🛠️ 模块五：节点协议解析器 (终极防雷版) ====================
 function parseToClashProxy(link) {
   try {
     if (!link.includes("://") && /^[A-Za-z0-9+/=\s]+$/.test(link)) link = atob(link.replace(/\s/g, ""));
@@ -181,44 +181,52 @@ function parseToClashProxy(link) {
     const name = hashIdx !== -1 ? decodeURIComponent(link.substring(hashIdx + 1).trim()) : "Unnamed";
     const urlStr = hashIdx !== -1 ? link.substring(0, hashIdx) : link;
 
+    // 预处理：URL对象解析，并去除 IPv6 地址自带的 [] 括号
+    const url = new URL(urlStr);
+    const p = url.searchParams;
+    const cleanServer = url.hostname.replace(/[\[\]]/g, ""); 
+
     // 1. VLESS 解析
     if (urlStr.startsWith("vless://")) {
-      const url = new URL(urlStr), p = url.searchParams;
-      let proxy = { name, type: "vless", server: url.hostname, port: +url.port || 443, uuid: url.username, udp: true, tls: ["tls", "reality"].includes(p.get("security")), network: p.get("type") || "tcp", servername: p.get("sni") || url.hostname };
+      let proxy = { name, type: "vless", server: cleanServer, port: +url.port || 443, uuid: url.username, udp: true, tls: ["tls", "reality"].includes(p.get("security")), network: p.get("type") || "tcp", servername: p.get("sni") || cleanServer };
       if (p.get("flow")) proxy.flow = p.get("flow");
       if (p.get("security") === "reality") { proxy["client-fingerprint"] = p.get("fp") || "chrome"; proxy["reality-opts"] = { "public-key": p.get("pbk") || "", "short-id": p.get("sid") || "" }; }
       if (proxy.network === "ws") { proxy["ws-opts"] = { path: p.get("path") || "/", headers: {} }; if (p.get("host")) proxy["ws-opts"].headers["Host"] = p.get("host"); }
       return proxy;
     } 
     
-    // 2. Trojan 解析 (新增) 🚀
+    // 2. Trojan 解析
     if (urlStr.startsWith("trojan://")) {
-      const url = new URL(urlStr), p = url.searchParams;
-      let proxy = { name, type: "trojan", server: url.hostname, port: +url.port || 443, password: url.username, udp: true, sni: p.get("sni") || p.get("peer") || url.hostname, "skip-cert-verify": p.get("allowInsecure") === "1" || p.get("insecure") === "1", network: p.get("type") || "tcp" };
+      let proxy = { name, type: "trojan", server: cleanServer, port: +url.port || 443, password: url.username, udp: true, sni: p.get("sni") || p.get("peer") || cleanServer, "skip-cert-verify": p.get("allowInsecure") === "1" || p.get("insecure") === "1", network: p.get("type") || "tcp" };
       if (proxy.network === "ws") { proxy["ws-opts"] = { path: p.get("path") || "/", headers: {} }; if (p.get("host")) proxy["ws-opts"].headers["Host"] = p.get("host"); }
       return proxy;
     }
 
-    // 3. Hysteria2 解析 (新增) 🚀
+    // 3. Hysteria2 解析
     if (urlStr.startsWith("hysteria2://") || urlStr.startsWith("hy2://")) {
-      const url = new URL(urlStr), p = url.searchParams;
-      let proxy = { name, type: "hysteria2", server: url.hostname, port: +url.port || 443, password: url.username, sni: p.get("sni") || url.hostname, "skip-cert-verify": p.get("insecure") === "1", up: p.get("up") || "100 Mbps", down: p.get("down") || "100 Mbps" };
+      let proxy = { name, type: "hysteria2", server: cleanServer, port: +url.port || 443, password: url.username, sni: p.get("sni") || cleanServer, "skip-cert-verify": p.get("insecure") === "1", up: p.get("up") || "100 Mbps", down: p.get("down") || "100 Mbps" };
       let mport = p.get("mport"); 
-      if (mport) proxy.port = mport; // Clash Meta 支持端口跳跃 (如 11629-11649) 也可以直接放 port 字段
+      if (mport) {
+        if (mport.includes("-") || mport.includes(",")) {
+          proxy.ports = mport; 
+          proxy.port = parseInt(mport.split(/[-,]/)[0]); 
+        } else {
+          proxy.port = parseInt(mport);
+        }
+      }
       return proxy;
     }
     
     // 4. TUIC 解析
     if (urlStr.startsWith("tuic://")) {
-      const url = new URL(urlStr), p = url.searchParams;
       const [uuid, password] = url.password ? [url.username, url.password] : url.username.split(":");
-      return { name, type: "tuic", server: url.hostname, port: +url.port, uuid, password: password || uuid, alpn: [p.get("alpn") || "h3"], "skip-cert-verify": p.get("insecure") === "1" || p.get("allowInsecure") === "1", "congestion-controller": p.get("congestion_control") || "bbr", udp: true };
+      return { name, type: "tuic", server: cleanServer, port: +url.port, uuid, password: password || uuid, alpn: [p.get("alpn") || "h3"], "skip-cert-verify": p.get("insecure") === "1" || p.get("allowInsecure") === "1", "congestion-controller": p.get("congestion_control") || "bbr", udp: true };
     }
     
     // 5. VMess 解析
     if (urlStr.startsWith("vmess://")) {
       let v; try { v = JSON.parse(decodeURIComponent(escape(atob(urlStr.replace("vmess://", ""))))); } catch (e) { v = JSON.parse(repairVmessJson(decodeURIComponent(escape(atob(urlStr.replace("vmess://", "")))))); }
-      let proxy = { name: hashIdx !== -1 ? name : (v.ps || "Unnamed VMESS"), type: "vmess", server: v.add, port: parseInt(v.port) || 443, uuid: v.id, alterId: parseInt(v.aid) || 0, cipher: v.scy || "auto", udp: true, tls: v.tls === "tls", network: v.net || "tcp" };
+      let proxy = { name: hashIdx !== -1 ? name : (v.ps || "Unnamed VMESS"), type: "vmess", server: v.add.replace(/[\[\]]/g, ""), port: parseInt(v.port) || 443, uuid: v.id, alterId: parseInt(v.aid) || 0, cipher: v.scy || "auto", udp: true, tls: v.tls === "tls", network: v.net || "tcp" };
       if (v.sni) proxy.servername = v.sni;
       if (v.net === "ws") { proxy["ws-opts"] = { path: v.path || "/", headers: {} }; if (v.host) proxy["ws-opts"].headers["Host"] = v.host; }
       return proxy;

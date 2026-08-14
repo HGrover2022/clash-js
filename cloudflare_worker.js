@@ -156,7 +156,7 @@ function parseSubconverterINI(iniString) {
   return { yamlProviders, yamlGroups, yamlRules: "rules:\n" + rules.join('\n') };
 }
 
-// ==================== 🌐 模块四：节点抓取与防雷引擎 ====================
+// ==================== 🌐 模块四：节点抓取引擎 ====================
 async function fetchAllNodes(raw) {
   const tasks = raw.split("\n").map(l => l.trim()).filter(Boolean).map(async line => {
     if (!line.startsWith("http")) return [line]; 
@@ -173,7 +173,53 @@ function repairVmessJson(jsonStr) {
   return jsonStr.replace(/"([a-zA-Z0-9_]+):"\s*(?=")/g, '"$1": ').replace(/"\s+"([a-zA-Z0-9_]+)"\s*:/g, '", "$1":');
 }
 
-// ==================== 🛠️ 模块五：节点协议解析器 (终极防雷版) ====================
+// ==================== 🛠️ 模块五：节点协议解析器 (终极防墙完全体) ====================
+function applyTransportOpts(proxy, p, cleanServer) {
+  // 1. 强制注入 TLS 指纹
+  proxy["client-fingerprint"] = p.get("fp") || "chrome";
+  
+  // 2. 强制注入 ALPN
+  if (p.get("alpn")) {
+    proxy.alpn = p.get("alpn").split(",").map(a => a.trim());
+  } else if (proxy.tls || p.get("security") === "tls" || p.get("security") === "reality") {
+    proxy.alpn = ["h2", "http/1.1"];
+  }
+
+  // 3. 证书校验
+  proxy["skip-cert-verify"] = (p.get("insecure") === "1" || p.get("allowInsecure") === "1");
+
+  // 4. 精准分配 SNI
+  const sni = p.get("sni") || p.get("peer") || p.get("host") || cleanServer;
+  if (proxy.type === "vless" || proxy.type === "vmess") proxy.servername = sni;
+  else if (proxy.type === "trojan" || proxy.type === "hysteria2") proxy.sni = sni;
+
+  // 5. 🌟 提取 ECH 参数 (破案关键)
+  if (p.get("ech")) {
+    let echHost = decodeURIComponent(p.get("ech")).split('+')[0].split(',')[0];
+    proxy["ech-opts"] = { 
+      enable: true, 
+      "query-server-name": echHost || "cloudflare-ech.com" 
+    };
+  }
+
+  // 6. 高级传输层 (WS / XHTTP / GRPC)
+  if (proxy.network === "ws") {
+    proxy["ws-opts"] = { path: p.get("path") || "/", headers: {} };
+    if (p.get("host")) proxy["ws-opts"].headers["Host"] = p.get("host");
+  } 
+  else if (proxy.network === "xhttp") {
+    proxy["xhttp-opts"] = { 
+      path: p.get("path") || "/", 
+      mode: p.get("mode") || "auto",
+      headers: {} 
+    };
+    if (p.get("host")) proxy["xhttp-opts"].headers["Host"] = p.get("host");
+  } 
+  else if (proxy.network === "grpc") {
+    proxy["grpc-opts"] = { "grpc-service-name": p.get("serviceName") || p.get("path") || "" };
+  }
+}
+
 function parseToClashProxy(link) {
   try {
     if (!link.includes("://") && /^[A-Za-z0-9+/=\s]+$/.test(link)) link = atob(link.replace(/\s/g, ""));
@@ -181,30 +227,29 @@ function parseToClashProxy(link) {
     const name = hashIdx !== -1 ? decodeURIComponent(link.substring(hashIdx + 1).trim()) : "Unnamed";
     const urlStr = hashIdx !== -1 ? link.substring(0, hashIdx) : link;
 
-    // 预处理：URL对象解析，并去除 IPv6 地址自带的 [] 括号
     const url = new URL(urlStr);
     const p = url.searchParams;
     const cleanServer = url.hostname.replace(/[\[\]]/g, ""); 
 
-    // 1. VLESS 解析
     if (urlStr.startsWith("vless://")) {
-      let proxy = { name, type: "vless", server: cleanServer, port: +url.port || 443, uuid: url.username, udp: true, tls: ["tls", "reality"].includes(p.get("security")), network: p.get("type") || "tcp", servername: p.get("sni") || cleanServer };
+      let proxy = { name, type: "vless", server: cleanServer, port: +url.port || 443, uuid: url.username, udp: true, network: p.get("type") || "tcp" };
+      if (p.get("security") === "tls" || p.get("security") === "reality") proxy.tls = true;
       if (p.get("flow")) proxy.flow = p.get("flow");
-      if (p.get("security") === "reality") { proxy["client-fingerprint"] = p.get("fp") || "chrome"; proxy["reality-opts"] = { "public-key": p.get("pbk") || "", "short-id": p.get("sid") || "" }; }
-      if (proxy.network === "ws") { proxy["ws-opts"] = { path: p.get("path") || "/", headers: {} }; if (p.get("host")) proxy["ws-opts"].headers["Host"] = p.get("host"); }
+      if (p.get("security") === "reality") { 
+        proxy["reality-opts"] = { "public-key": p.get("pbk") || "", "short-id": p.get("sid") || "" }; 
+      }
+      applyTransportOpts(proxy, p, cleanServer);
       return proxy;
     } 
     
-    // 2. Trojan 解析
     if (urlStr.startsWith("trojan://")) {
-      let proxy = { name, type: "trojan", server: cleanServer, port: +url.port || 443, password: url.username, udp: true, sni: p.get("sni") || p.get("peer") || cleanServer, "skip-cert-verify": p.get("allowInsecure") === "1" || p.get("insecure") === "1", network: p.get("type") || "tcp" };
-      if (proxy.network === "ws") { proxy["ws-opts"] = { path: p.get("path") || "/", headers: {} }; if (p.get("host")) proxy["ws-opts"].headers["Host"] = p.get("host"); }
+      let proxy = { name, type: "trojan", server: cleanServer, port: +url.port || 443, password: url.username, udp: true, network: p.get("type") || "tcp" };
+      applyTransportOpts(proxy, p, cleanServer);
       return proxy;
     }
 
-    // 3. Hysteria2 解析
     if (urlStr.startsWith("hysteria2://") || urlStr.startsWith("hy2://")) {
-      let proxy = { name, type: "hysteria2", server: cleanServer, port: +url.port || 443, password: url.username, sni: p.get("sni") || cleanServer, "skip-cert-verify": p.get("insecure") === "1", up: p.get("up") || "100 Mbps", down: p.get("down") || "100 Mbps" };
+      let proxy = { name, type: "hysteria2", server: cleanServer, port: +url.port || 443, password: url.username, up: p.get("up") || "100 Mbps", down: p.get("down") || "100 Mbps" };
       let mport = p.get("mport"); 
       if (mport) {
         if (mport.includes("-") || mport.includes(",")) {
@@ -214,33 +259,43 @@ function parseToClashProxy(link) {
           proxy.port = parseInt(mport);
         }
       }
+      applyTransportOpts(proxy, p, cleanServer);
       return proxy;
     }
     
-    // 4. TUIC 解析
     if (urlStr.startsWith("tuic://")) {
       const [uuid, password] = url.password ? [url.username, url.password] : url.username.split(":");
       return { name, type: "tuic", server: cleanServer, port: +url.port, uuid, password: password || uuid, alpn: [p.get("alpn") || "h3"], "skip-cert-verify": p.get("insecure") === "1" || p.get("allowInsecure") === "1", "congestion-controller": p.get("congestion_control") || "bbr", udp: true };
     }
     
-    // 5. VMess 解析
     if (urlStr.startsWith("vmess://")) {
       let v; try { v = JSON.parse(decodeURIComponent(escape(atob(urlStr.replace("vmess://", ""))))); } catch (e) { v = JSON.parse(repairVmessJson(decodeURIComponent(escape(atob(urlStr.replace("vmess://", "")))))); }
       let proxy = { name: hashIdx !== -1 ? name : (v.ps || "Unnamed VMESS"), type: "vmess", server: v.add.replace(/[\[\]]/g, ""), port: parseInt(v.port) || 443, uuid: v.id, alterId: parseInt(v.aid) || 0, cipher: v.scy || "auto", udp: true, tls: v.tls === "tls", network: v.net || "tcp" };
+      
       if (v.sni) proxy.servername = v.sni;
-      if (v.net === "ws") { proxy["ws-opts"] = { path: v.path || "/", headers: {} }; if (v.host) proxy["ws-opts"].headers["Host"] = v.host; }
+      if (v.fp) proxy["client-fingerprint"] = v.fp;
+      else if (proxy.tls) proxy["client-fingerprint"] = "chrome";
+      if (v.alpn) proxy.alpn = v.alpn.split(",").map(a => a.trim());
+      else if (proxy.tls) proxy.alpn = ["h2", "http/1.1"];
+
+      if (proxy.network === "ws") { 
+        proxy["ws-opts"] = { path: v.path || "/", headers: {} }; 
+        if (v.host) proxy["ws-opts"].headers["Host"] = v.host; 
+      }
+      else if (proxy.network === "grpc") {
+        proxy["grpc-opts"] = { "grpc-service-name": v.path || "" };
+      }
       return proxy;
     }
     
     return null;
   } catch (e) { return null; }
 }
+
 // ==================== 🚀 模块六：云端调度中枢 ====================
 export default {
   async fetch(req) {
     const url = new URL(req.url);
-    
-    // 1. 提取 URL 路径参数：支持 /TOKEN 或 /TOKEN/stash
     const pathParts = url.pathname.slice(1).split('/');
     let token = pathParts[0] || url.searchParams.get("token");
     let pathOverride = pathParts[1] ? pathParts[1].toLowerCase() : "";
@@ -253,7 +308,6 @@ export default {
     const uaLower = userAgent.toLowerCase();
     const time = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
 
-    // 2. 校验鉴权
     const user = USERS_CONFIG[token];
     if (!user) {
       console.log(`[${time}] 🚫 拒绝访问 | IP: ${clientIP} | Token: [${token}]`);
@@ -261,58 +315,28 @@ export default {
     }
 
     try {
-      // ==========================================
-      // 🌟 动态分流与客户端适配逻辑
-      // ==========================================
       let finalIniUrl = FULL_INI_URL;
       let finalHeader = MIHOMO_YAML_HEADER;
-      let ruleTypeLog = "默认 FULL 规则";
-
-      const simplePaths = ['stash', 'clashmi']; 
-      const forceSimpleByPath = simplePaths.includes(pathOverride);
       
-      const isSimpleClient = uaLower.includes('stash') || 
-                             uaLower.includes('clashmi') || 
-                             uaLower.includes('clashverge') ||
-                             uaLower.includes('mihomo');
-
-      // 判断是否需要下发 SIMPLE 规则
-      if (forceSimpleByPath) {
+      const isSimpleClient = uaLower.includes('stash') || uaLower.includes('clashmi') || uaLower.includes('clashverge') || uaLower.includes('mihomo');
+      if (['stash', 'clashmi'].includes(pathOverride) || isSimpleClient) {
         finalIniUrl = SIMPLE_INI_URL;
-        ruleTypeLog = `强制 SIMPLE 规则 (URL后缀匹配: /${pathOverride})`;
-      } else if (isSimpleClient) {
-        finalIniUrl = SIMPLE_INI_URL;
-        ruleTypeLog = "智能识别 SIMPLE 规则 (User-Agent匹配)";
       }
 
-      // ⚠️ 核心修改：专属 Stash 模式判断 (需要剔除节点并简化头部)
       const isStashMode = pathOverride === 'stash' || uaLower.includes('stash');
-      if (isStashMode) {
-        finalHeader = STASH_YAML_HEADER; // 使用简化的 YAML 头部
-        ruleTypeLog += " + [Stash兼容模式激活：剔除 xhttp、启用简易头部]";
-      }
+      if (isStashMode) finalHeader = STASH_YAML_HEADER;
 
-      console.log(`[${time}] ✅ 订阅拉取 | 用户: ${user.name} | 规则: ${ruleTypeLog} | 客户端: ${userAgent}`);
-      
-      // 3. 并发拉取节点与配置
       const [nodesData, iniString] = await Promise.all([ 
         fetchAllNodes(user.nodes), 
         fetch(finalIniUrl, { headers: { "User-Agent": "Mozilla/5.0" } }).then(res => res.text()) 
       ]);
       
-      // 4. 节点解析与 Stash xhttp 过滤
       let proxies = nodesData.map(parseToClashProxy).filter(Boolean);
-      
-      if (isStashMode) {
-        // 如果是 Stash 模式，剔除 network 为 xhttp 的节点
-        proxies = proxies.filter(p => p.network !== "xhttp");
-      }
+      if (isStashMode) proxies = proxies.filter(p => p.network !== "xhttp");
       
       const proxiesYaml = `proxies:\n${proxies.map(p => `  - ${JSON.stringify(p)}`).join("\n")}`;
-      
       const { yamlProviders, yamlGroups, yamlRules } = parseSubconverterINI(iniString);
       
-      // 5. 拼装返回
       return new Response(`${finalHeader}\n\n${yamlProviders}\n\n${proxiesYaml}\n\n${yamlGroups}\n\n${yamlRules}`, {
         headers: {
           "Content-Type": "text/yaml; charset=utf-8",

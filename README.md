@@ -48,7 +48,7 @@
 
 ### 1. 配置规则订阅源 (INI)
 请在你的 GitHub 仓库中准备好 `.ini` 格式的路由规则文件，并将 Raw 链接填入此处：
-```
+```javascript
 // 替换为你自己的规则库地址
 const FULL_INI_URL = "https://raw.githubusercontent.com/your-name/your-repo/main/clash_full.ini";
 const SIMPLE_INI_URL = "https://raw.githubusercontent.com/your-name/your-repo/main/clash_simple.ini";
@@ -56,7 +56,7 @@ const SIMPLE_INI_URL = "https://raw.githubusercontent.com/your-name/your-repo/ma
 
 ### 2. 配置用户与节点 (USERS_CONFIG)
 在这里管理你的用户权限及节点：
-```
+```javascript
 const USERS_CONFIG = {
   // 用户的 Token，作为 URL 的访问路径
   "my_secret_token_1": {                              
@@ -78,13 +78,6 @@ https://airport.com/api/v1/client/subscribe?token=xxx
 部署完成后，你的订阅链接格式如下：
 *   **默认智能模式**：`https://你的worker域名.workers.dev/my_secret_token_1`
 *   **强制 Stash 模式**：`https://你的worker域名.workers.dev/my_secret_token_1/stash`
-
----
-
-## 📝 TODO / 未来计划
-- [ ] 增加按日期的流量自动清零/重置逻辑 (需引入 KV 存储)
-- [ ] 支持 Hysteria2 协议解析
-- [ ] 支持可视化的 Web Dashboard 管理用户
 
 ## ⚠️ 免责声明
 本项目仅供编程学习与 Serverless 架构研究使用。请使用者遵守所在地相关法律法规，开发者不对由于滥用本项目造成的任何后果负责。

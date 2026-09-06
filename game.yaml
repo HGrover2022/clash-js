@@ -2,6 +2,14 @@ payload:
   # NAME: Game
   # AUTHOR: HGrover
   # REPO: local
-  # UPDATED: 2026-08-08
+  # UPDATED: 2026-09-06
+
+  # 游戏进程规则 (适用 Clash Meta / Mihomo)
+  - PROCESS-NAME-REGEX,(?i)Forzahorizon
+  - PROCESS-NAME-REGEX,(?i)(GTA|Rockstar|Socialclub)
+  - PROCESS-NAME-REGEX,(?i)bf(1|v|2042)
+  - PROCESS-NAME-REGEX,(?i)(javaw|among.us)
+
+  # 域名规则
   - DOMAIN-SUFFIX,rockstargames.com
   - DOMAIN-SUFFIX,rockstargames.net

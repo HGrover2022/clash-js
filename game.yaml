@@ -8,7 +8,7 @@ payload:
   - PROCESS-NAME-REGEX,(?i)Forzahorizon
   - PROCESS-NAME-REGEX,(?i)(GTA|Rockstar|Socialclub)
   - PROCESS-NAME-REGEX,(?i)bf(1|v|2042)
-  - PROCESS-NAME-REGEX,(?i)(javaw|among.us)
+  - PROCESS-NAME-REGEX,(?i)(java|among.us)
 
   # 域名规则
   - DOMAIN-SUFFIX,rockstargames.com

@@ -1,5 +1,21 @@
 payload:
-  # 个人全局直连关键词
+  # =========================
+  # 个人全局直连
+  # =========================
+
   - DOMAIN-KEYWORD,hhkan
   - IP-CIDR,152.69.184.104/32,no-resolve
   - 'PROCESS-NAME,Trae CN.exe'
+
+  # =========================
+  # Steam 游戏下载 / CDN
+  # =========================
+
+  - DOMAIN-SUFFIX,steamcontent.com
+  - DOMAIN-SUFFIX,steamserver.net
+  - DOMAIN-SUFFIX,clngaa.com
+  - DOMAIN-SUFFIX,baishancdnx.cn
+  - DOMAIN-SUFFIX,bhs9.com
+  - DOMAIN-SUFFIX,qtlglb.com
+  - DOMAIN-SUFFIX,cm.steampowered.com
+  - DOMAIN-SUFFIX,steamcdn-a.akamaihd.net

@@ -1,16 +1,11 @@
 payload:
-  # =========================
-  # 个人全局直连
-  # =========================
-
   - DOMAIN-KEYWORD,hhkan
+  - DOMAIN-SUFFIX,esadj.com
   - IP-CIDR,152.69.184.104/32,no-resolve
   - 'PROCESS-NAME,Trae CN.exe'
-  - DOMAIN-SUFFIX,uploader.ente.com     #ente photos上传服务器
-  # =========================
+  # ente photos上传服务器
+  - DOMAIN-SUFFIX,uploader.ente.com
   # Steam 游戏下载 / CDN
-  # =========================
-
   - DOMAIN-SUFFIX,steamcontent.com
   - DOMAIN-SUFFIX,steamserver.net
   - DOMAIN-SUFFIX,clngaa.com
@@ -19,4 +14,3 @@ payload:
   - DOMAIN-SUFFIX,qtlglb.com
   - DOMAIN-SUFFIX,cm.steampowered.com
   - DOMAIN-SUFFIX,steamcdn-a.akamaihd.net
-  - DOMAIN-SUFFIX,esadj.com

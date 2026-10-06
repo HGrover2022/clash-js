@@ -6,7 +6,7 @@ payload:
   - DOMAIN-KEYWORD,hhkan
   - IP-CIDR,152.69.184.104/32,no-resolve
   - 'PROCESS-NAME,Trae CN.exe'
-
+  - DOMAIN-SUFFIX,uploader.ente.com     #ente photos上传服务器
   # =========================
   # Steam 游戏下载 / CDN
   # =========================

@@ -3,6 +3,7 @@ payload:
   - DOMAIN-SUFFIX,esadj.com
   - IP-CIDR,152.69.184.104/32,no-resolve
   - 'PROCESS-NAME,Trae CN.exe'
+  - DOMAIN-SUFFIX,qjjshdd.com
   # ente photos上传服务器
   - DOMAIN-SUFFIX,uploader.ente.com
   # Steam 游戏下载 / CDN
